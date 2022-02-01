@@ -1,0 +1,139 @@
+<template>
+  <div ref="container" class="ssss">
+    <canvas style="position: fixed; left: 350px" ref="canvasEl"></canvas>
+    <canvas style="position: fixed; left: 350px; top: 450px" ref="canvasEl2"></canvas>
+  </div>
+
+</template>
+<script setup>
+import * as BABYLON from 'babylonjs';
+import "@babylonjs/inspector"
+import 'babylonjs-loaders'
+import {onMounted, ref} from "vue";
+
+const canvasEl = ref(null);
+const canvasEl2 = ref(null);
+// const canvasEl2 = ref(null);
+
+const createTableTent = (canvas) => {
+  const engine = new BABYLON.Engine(canvas);
+  var scene = new BABYLON.Scene(engine);
+
+  const camera = new BABYLON.ArcRotateCamera("camera", -0.1, 2, 10, new BABYLON.Vector3(0, 0, 0), scene);
+  camera.attachControl(canvas, true);
+
+  scene.debugLayer.show();
+
+  //light
+  new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene)
+  // new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, -1, 0), scene)
+
+  // material
+  const alphabetMat = new BABYLON.PBRMaterial('alphabetMat', scene);
+  alphabetMat.metallic = 0;
+  alphabetMat.roughness = 0.5;
+
+  // texture
+  const alphabetTexture = new BABYLON.Texture('14-3.jpg', scene);
+  alphabetTexture.vScale = -1.3;
+  alphabetTexture.uScale = -3.79;
+  alphabetTexture.uOffset = 3.81;
+  alphabetTexture.vOffset = 0.99;
+  alphabetTexture.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
+  alphabetTexture.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
+  alphabetMat.albedoTexture = alphabetTexture;
+
+  // load model
+  BABYLON.SceneLoader.LoadAssetContainer('/models/tableTent/', 'TableTentConverted2.gltf', scene, (container) => {
+    const meshes = container.meshes;
+
+    meshes.forEach( m => {
+      m.scaling = new BABYLON.Vector3(
+          0.14,
+          0.14,
+          0.14,
+      );
+    })
+
+    meshes[1].material = alphabetMat
+
+    container.addAllToScene();
+
+  })
+
+  engine.runRenderLoop(() => {
+    scene.render();
+  })
+}
+
+const createCap = (canvas) => {
+  const engine = new BABYLON.Engine(canvas);
+  const scene = new BABYLON.Scene(engine);
+  const camera = new BABYLON.ArcRotateCamera("camera", -0.1, 2, 10, new BABYLON.Vector3(0, 0, 0), scene);
+  camera.attachControl(canvas, true);
+
+  scene.debugLayer.show();
+
+  // light
+  new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene)
+  // new BABYLON.HemisphericLight("light2", new BABYLON.Vector3(0, -1, 0), scene)
+
+  // material
+  const capMat = new BABYLON.PBRMaterial('capMat', scene);
+  capMat.metallic = 0;
+  capMat.roughness = 0.5;
+
+  // texture
+  const capTexture = new BABYLON.Texture('/src/assets/J9sAWPD.jpg', scene);
+  capTexture.vScale = -4.02;
+  capTexture.uScale = -1.4;
+  capTexture.uOffset = 1.04;
+  capTexture.vOffset = 1.03;
+  capTexture.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
+  capTexture.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
+  capMat.albedoTexture = capTexture;
+
+  // load model
+  BABYLON.SceneLoader.LoadAssetContainer("/models/mug/", 'caneca.gltf', scene, function (container) {
+    const meshes = container.meshes;
+    meshes[0].scaling = new BABYLON.Vector3(10, 10, 10);
+    meshes.forEach( m => {
+      m.scaling = new BABYLON.Vector3(
+          10,
+          10,
+          10
+      );
+    })
+    console.log(meshes)
+    meshes[1].material = capMat
+
+    container.addAllToScene();
+
+  });
+
+
+  engine.runRenderLoop(() => {
+    scene.render();
+  })
+}
+
+onMounted(() => {
+  console.log(canvasEl.value)
+  if (canvasEl.value) {
+    canvasEl.value.style.width = '700px'
+    canvasEl2.value.style.width = '700px'
+
+    createCap(canvasEl.value)
+    createTableTent(canvasEl2.value)
+
+  }
+})
+</script>
+
+
+
+<style scoped>
+a {
+  color: #42b983;
+}
+</style>
