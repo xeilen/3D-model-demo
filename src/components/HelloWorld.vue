@@ -84,7 +84,7 @@ const createCap = (canvas) => {
   capMat.roughness = 0.5;
 
   // texture
-  const capTexture = new BABYLON.Texture('/src/assets/J9sAWPD.jpg', scene);
+  const capTexture = new BABYLON.Texture('J9sAWPD.jpg', scene);
   capTexture.vScale = -4.02;
   capTexture.uScale = -1.4;
   capTexture.uOffset = 1.04;
