@@ -1,8 +1,10 @@
 <script setup>
 import HelloWorld from './components/HelloWorld.vue'
+import Fabric from "./components/Fabric.vue";
 </script>
 
 <template>
+<!--  <Fabric />-->
 
   <HelloWorld />
 </template>
