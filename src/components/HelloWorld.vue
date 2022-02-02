@@ -1,52 +1,120 @@
 <template>
-  <div ref="container" class="ssss">
-    <div>
-      <label>
-        <span>Width: </span>
-        <input type="number" placeholder="Width" v-model="width">
-      </label>
-      <label>
-        <span>Height: </span>
-        <input type="number" placeholder="Height" v-model="height">
-      </label>
-      <label>
-        <span>InnerWidth: </span>
-        <input type="number" placeholder="Angle" v-model="innerWidth">
-      </label>
-      <input type="button" value="generate" @click="generate(canvasEl2, width, height, innerWidth)">
+  <div class="container">
+    <div class="configuration">
+      <form>
+        <div class="select-model">
+          <select class="form-select" v-model="selectedModel" aria-label="Default select example">
+            <option disabled value="" selected>Select model...</option>
+            <option value="Mug">Mug</option>
+            <option value="tableTent">Table Tent</option>
+          </select>
+        </div>
+
+        <div class="specs" v-if="selectedModel">
+          <div v-for="spec in specs[selectedModel]" class="spec-item mt-3">
+            <label>
+              <span class="form-label">{{ spec.label }}: </span>
+              <input class="form-control" type="number" v-model="spec.value">
+            </label>
+          </div>
+        </div>
+
+        <button class="mt-3 btn btn-primary" :disabled="!selectedModel" @click.prevent="generate(canvasEl)">Generate</button>
+      </form>
+
+<!--      {{ selectedModel }}-->
+
     </div>
-    <canvas style="position: fixed; left: 350px" ref="canvasEl"></canvas>
-    <canvas style="position: fixed; left: 350px; top: 150px" ref="canvasEl2"></canvas>
+
+    <div class="canvas">
+      <canvas ref="canvasEl"></canvas>
+    </div>
+<!-- ed; left: 350px; top: 150px" ref="canvasEl2"></canvas>-->
   </div>
 
 </template>
 <script setup>
 import * as BABYLON from 'babylonjs';
-import "@babylonjs/inspector"
+// import "@babylonjs/inspector"
 import 'babylonjs-loaders'
-import {onMounted, ref} from "vue";
+import {onMounted, reactive, ref} from "vue";
 
 const width = ref(50);
 const height = ref(100);
 const innerWidth = ref(70);
+const radius = ref(45)
+const mugHeight = ref(120);
 
-const generate = (canvas, width, height, innerWidth) => {
-  const defaultWidth = 50;
-  const defaultHeight = 100;
-  const defaultInnerWidth = 70;
+const selectedModel = ref('');
 
-  const computedWidth = width / defaultWidth;
-  const computedHeight = height / defaultHeight;
-  const computedInnerWidth = innerWidth / defaultInnerWidth;
-  console.log(computedWidth, computedHeight)
-  createTableTent(canvas, computedWidth, computedHeight, computedInnerWidth)
+const specs = reactive({
+      Mug: [
+        {
+          label: 'Height',
+          value: mugHeight,
+        },
+        {
+          label: "Radius",
+          value: radius
+        }
+
+      ],
+      tableTent: [
+        {
+          label: 'Width',
+          value: width,
+        },
+        {
+          label: 'Height',
+          value: height
+        },
+        {
+          label: 'Bottom',
+          value: innerWidth
+        }
+      ]
+
+    }
+)
+
+
+
+const generate = (canvas) => {
+
+  canvas.style.width = '700px';
+
+  let modelPath = '';
+  let modelFileName = '';
+
+  if (selectedModel.value === 'Mug') {
+    modelPath = '/models/mug/';
+    modelFileName = 'caneca.gltf';
+    createCap(canvas)
+  }
+
+  if (selectedModel.value === 'tableTent') {
+    modelPath = '/models/TableTentBlender/';
+    modelFileName = 'TableTentBlender.gltf';
+    createTableTent(canvas)
+  }
+
+  // if (selectedModel)
+  // createTableTent(canvas, computedWidth, computedHeight, computedInnerWidth)
 }
 
 const canvasEl = ref(null);
 const canvasEl2 = ref(null);
 // const canvasEl2 = ref(null);
 
-const createTableTent = (canvas, width, height, angle) => {
+const createTableTent = (canvas) => {
+  const defaultWidth = 50;
+  const defaultHeight = 100;
+  const defaultInnerWidth = 70;
+
+  const computedWidth = width.value / defaultWidth;
+  const computedHeight = height.value / defaultHeight;
+  const computedInnerWidth = innerWidth.value / defaultInnerWidth;
+
   const engine = new BABYLON.Engine(canvas);
   var scene = new BABYLON.Scene(engine);
 
@@ -67,7 +135,7 @@ const createTableTent = (canvas, width, height, angle) => {
   alphabetMat.roughness = 0.5;
 
   // texture
-  const alphabetTexture = new BABYLON.Texture('/src/assets/14.jpg', scene);
+  const alphabetTexture = new BABYLON.Texture('/src/assets/flamingo.jpg', scene);
   // alphabetTexture.vScale = -1.3;
   // alphabetTexture.uScale = -3.79;
   // alphabetTexture.uOffset = 3.81;
@@ -79,14 +147,17 @@ const createTableTent = (canvas, width, height, angle) => {
   // load model
   BABYLON.SceneLoader.LoadAssetContainer('/models/TableTentBlender/', 'TableTentBlender.gltf', scene, (container) => {
     const meshes = container.meshes;
-    meshes[0].scaling = new BABYLON.Vector3(angle, height, width)
-    console.log(meshes[0])
+    console.log(meshes)
+    meshes[0].scaling = new BABYLON.Vector3(computedInnerWidth, computedHeight, computedWidth)
+    meshes[0].position.y = -2
+    // console.log(meshes[0])
 
     // meshes[0].scaling = new BABYLON.Vector3(0.14, 0.14, 0.14)
 
     meshes.forEach( m => {
-      console.log(m)
+      // console.log(m)
       m.material = alphabetMat
+      m.subMeshes = [];
       // m.rotation = new BABYLON.Vector3(0,0,0)
       // m.scaling = new BABYLON.Vector3(
       //     1,
@@ -109,12 +180,18 @@ const createTableTent = (canvas, width, height, angle) => {
 }
 
 const createCap = (canvas) => {
+  const defaultRadius = 45;
+  const defaultHeight = 120;
+
+  const computedRadius = radius.value / defaultRadius;
+  const computedHeight = mugHeight.value / defaultHeight;
+
   const engine = new BABYLON.Engine(canvas);
   const scene = new BABYLON.Scene(engine);
   const camera = new BABYLON.ArcRotateCamera("camera", -0.1, 2, 10, new BABYLON.Vector3(0, 0, 0), scene);
   camera.attachControl(canvas, true);
 
-  scene.debugLayer.show();
+  // scene.debugLayer.show();
 
   // light
   new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene)
@@ -134,16 +211,17 @@ const createCap = (canvas) => {
   capTexture.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
   capTexture.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
   capMat.albedoTexture = capTexture;
+  console.log(computedHeight, computedRadius)
 
   // load model
   BABYLON.SceneLoader.LoadAssetContainer("/models/mug/", 'caneca.gltf', scene, function (container) {
     const meshes = container.meshes;
-    meshes[0].scaling = new BABYLON.Vector3(10, 10, 10);
+    // meshes[0].scaling = new BABYLON.Vector3(10, 10, 10);
     meshes.forEach( m => {
       m.scaling = new BABYLON.Vector3(
-          10,
-          10,
-          10
+          10 * computedRadius,
+          10 * computedHeight,
+          10 * computedRadius
       );
     })
 
@@ -151,7 +229,7 @@ const createCap = (canvas) => {
     // meshes[2].scaling = new BABYLON.Vector3(12, 10, 10)
     // meshes[3].scaling = new BABYLON.Vector3(12, 10, 10)
     // meshes[5].scaling = new BABYLON.Vector3(10, 6, 10)
-    console.log(meshes)
+    // console.log(meshes)
     meshes[1].material = capMat
 
     container.addAllToScene();
@@ -165,22 +243,46 @@ const createCap = (canvas) => {
 }
 
 onMounted(() => {
-  console.log(canvasEl.value)
-  if (canvasEl.value) {
-    canvasEl.value.style.width = '700px'
-    canvasEl2.value.style.width = '700px'
+  // console.log(canvasEl.value)
+  // if (canvasEl.value) {
+    // canvasEl.value.style.width = '700px'
+    // canvasEl2.value.style.width = '700px'
 
     // createCap(canvasEl.value)
     // createTableTent(canvasEl2.value)
 
-  }
+  // }
 })
 </script>
 
 
 
 <style scoped>
-a {
-  color: #42b983;
+.container {
+  display: flex;
+}
+
+.configuration {
+  flex-basis: 400px;
+}
+
+.canvas {
+  flex-basis: 100%;
+}
+
+@media (max-width: 992px){
+  .container {
+    flex-direction: column;
+  }
+
+  .configuration,
+  .canvas {
+    flex-basis: 100%;
+  }
+
+  canvas {
+    margin-top: 40px;
+    width: 500px !important;
+  }
 }
 </style>
