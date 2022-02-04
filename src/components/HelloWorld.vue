@@ -3,7 +3,11 @@
     <div class="configuration">
       <form>
         <div class="select-model">
-          <select class="form-select" v-model="selectedModel" aria-label="Default select example">
+          <select
+              class="form-select"
+              v-model="selectedModel"
+              aria-label="Default select example"
+          >
             <option disabled value="" selected>Select model...</option>
             <option value="Mug">Mug</option>
             <option value="tableTent">Table Tent</option>
@@ -14,22 +18,38 @@
           <div v-for="spec in specs[selectedModel]" class="spec-item mt-3">
             <label>
               <span class="form-label">{{ spec.label }}: </span>
-              <input class="form-control" type="number" v-model="spec.value">
+              <input
+                  class="form-control"
+                  type="number"
+                  v-model="spec.value"
+              >
+            </label>
+          </div>
+
+          <div class="mt-3">
+            <label>
+              <span class="form-label">Image: </span>
+              <input
+                  type="file"
+                  class="form-control"
+                  @change="handleImage"
+                  accept="image/jpeg/*"
+              >
             </label>
           </div>
         </div>
 
-        <button class="mt-3 btn btn-primary" :disabled="!selectedModel" @click.prevent="generate(canvasEl)">Generate</button>
+        <button
+            class="mt-3 btn btn-primary"
+            :disabled="!selectedModel"
+            @click.prevent="generate()"
+        >
+          Generate
+        </button>
       </form>
-
-<!--      {{ selectedModel }}-->
-
     </div>
 
-    <div class="canvas">
-      <canvas ref="canvasEl"></canvas>
-    </div>
-<!-- ed; left: 350px; top: 150px" ref="canvasEl2"></canvas>-->
+    <div id="canvas-container"></div>
   </div>
 
 </template>
@@ -44,6 +64,19 @@ const height = ref(100);
 const innerWidth = ref(70);
 const radius = ref(45)
 const mugHeight = ref(120);
+
+const image = ref('null');
+
+const handleImage = (e) => {
+  const selectedImage = e.target.files[0];
+  const reader = new FileReader();
+
+  reader.onloadend = () => {
+    image.value = reader.result;
+  }
+
+  reader.readAsDataURL(selectedImage);
+}
 
 const selectedModel = ref('');
 
@@ -77,9 +110,24 @@ const specs = reactive({
     }
 )
 
+const generate = () => {
+  const canvasContainer = document.getElementById('canvas-container');
+  let canvas = document.getElementById('canvas');
+  // console.log(canvas)
 
+  if (canvas) {
+    canvas.remove();
 
-const generate = (canvas) => {
+    canvas = document.createElement('canvas');
+    canvas.id = 'canvas';
+
+    canvasContainer.append(canvas);
+  } else {
+    canvas = document.createElement('canvas');
+    canvas.id = 'canvas';
+
+    canvasContainer.append(canvas);
+  }
 
   canvas.style.width = '700px';
 
@@ -89,24 +137,18 @@ const generate = (canvas) => {
   if (selectedModel.value === 'Mug') {
     modelPath = '/models/mug/';
     modelFileName = 'caneca.gltf';
-    createCap(canvas)
+    createCap(canvas, image.value)
   }
 
   if (selectedModel.value === 'tableTent') {
     modelPath = '/models/TableTentBlender/';
     modelFileName = 'TableTentBlender.gltf';
-    createTableTent(canvas)
+    createTableTent(canvas, image.value)
   }
 
-  // if (selectedModel)
-  // createTableTent(canvas, computedWidth, computedHeight, computedInnerWidth)
 }
 
-const canvasEl = ref(null);
-const canvasEl2 = ref(null);
-// const canvasEl2 = ref(null);
-
-const createTableTent = (canvas) => {
+const createTableTent = (canvas, image) => {
   const defaultWidth = 50;
   const defaultHeight = 100;
   const defaultInnerWidth = 70;
@@ -116,70 +158,56 @@ const createTableTent = (canvas) => {
   const computedInnerWidth = innerWidth.value / defaultInnerWidth;
 
   const engine = new BABYLON.Engine(canvas);
-  var scene = new BABYLON.Scene(engine);
+  const scene = new BABYLON.Scene(engine);
 
 
   const camera = new BABYLON.ArcRotateCamera("camera", -0.1, 2, 10, new BABYLON.Vector3(0, 0, 0), scene);
   camera.attachControl(canvas, true);
 
-  scene.debugLayer.show();
+  // scene.debugLayer.show();
 
   //light
   new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene)
   // new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, -1, 0), scene)
 
   // material
-  const alphabetMat = new BABYLON.PBRMaterial('alphabetMat', scene);
-  alphabetMat.backFaceCulling = false;
-  alphabetMat.metallic = 0;
-  alphabetMat.roughness = 0.5;
+  const outsideMat = new BABYLON.PBRMaterial('outsideMat', scene);
+  outsideMat.backFaceCulling = false;
+  outsideMat.metallic = 0;
+  outsideMat.roughness = 0.5;
+
+  const insideMat = new BABYLON.PBRMaterial('insideMat', scene);
+  insideMat.metallic = 0;
+  insideMat.roughness = 0.5;
 
   // texture
-  const alphabetTexture = new BABYLON.Texture('/src/assets/flamingo.jpg', scene);
-  // alphabetTexture.vScale = -1.3;
-  // alphabetTexture.uScale = -3.79;
-  // alphabetTexture.uOffset = 3.81;
-  // alphabetTexture.vOffset = 0.99;
-  // alphabetTexture.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
-  // alphabetTexture.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
-  alphabetMat.albedoTexture = alphabetTexture;
+  const outsideTexture = new BABYLON.Texture(image, scene);
+  outsideMat.albedoTexture = outsideTexture;
+
+  const insideTexture = new BABYLON.Texture('paper.jpg', scene);
+  insideMat.albedoTexture = insideTexture;
 
   // load model
-  BABYLON.SceneLoader.LoadAssetContainer('/models/TableTentBlender/', 'TableTentBlender.gltf', scene, (container) => {
+  BABYLON.SceneLoader.LoadAssetContainer('/models/DownloadedTableTent/', 'DonwloadedTableTent2.gltf', scene, (container) => {
     const meshes = container.meshes;
-    console.log(meshes)
-    meshes[0].scaling = new BABYLON.Vector3(computedInnerWidth, computedHeight, computedWidth)
-    meshes[0].position.y = -2
-    // console.log(meshes[0])
+    // console.log(meshes)
+    meshes[0].scaling = new BABYLON.Vector3(25 * computedWidth,25 * computedHeight,25 * computedInnerWidth)
+    meshes[0].position.y = -2;
 
-    // meshes[0].scaling = new BABYLON.Vector3(0.14, 0.14, 0.14)
+    meshes[1].material = insideMat;
+    meshes[2].material = outsideMat;
 
-    meshes.forEach( m => {
-      // console.log(m)
-      m.material = alphabetMat
-      m.subMeshes = [];
-      // m.rotation = new BABYLON.Vector3(0,0,0)
-      // m.scaling = new BABYLON.Vector3(
-      //     1,
-      //     0,
-      //     0,
-      // );
-    })
-
-    // meshes[3].material = alphabetMat
 
     container.addAllToScene();
 
   })
-
-
 
   engine.runRenderLoop(() => {
     scene.render();
   })
 }
 
-const createCap = (canvas) => {
+const createCap = (canvas, image) => {
   const defaultRadius = 45;
   const defaultHeight = 120;
 
@@ -203,7 +231,7 @@ const createCap = (canvas) => {
   capMat.roughness = 0.5;
 
   // texture
-  const capTexture = new BABYLON.Texture('J9sAWPD.jpg', scene);
+  const capTexture = new BABYLON.Texture(image, scene);
   capTexture.vScale = -4.02;
   capTexture.uScale = -1.4;
   capTexture.uOffset = 1.04;
@@ -211,7 +239,7 @@ const createCap = (canvas) => {
   capTexture.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
   capTexture.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
   capMat.albedoTexture = capTexture;
-  console.log(computedHeight, computedRadius)
+  // console.log(computedHeight, computedRadius)
 
   // load model
   BABYLON.SceneLoader.LoadAssetContainer("/models/mug/", 'caneca.gltf', scene, function (container) {
@@ -224,35 +252,16 @@ const createCap = (canvas) => {
           10 * computedRadius
       );
     })
-
-    // meshes[0].scaling = new BABYLON.Vector3(10 * 1.5, 10, 10 * 1.5)
-    // meshes[2].scaling = new BABYLON.Vector3(12, 10, 10)
-    // meshes[3].scaling = new BABYLON.Vector3(12, 10, 10)
-    // meshes[5].scaling = new BABYLON.Vector3(10, 6, 10)
-    // console.log(meshes)
     meshes[1].material = capMat
 
     container.addAllToScene();
 
   });
 
-
   engine.runRenderLoop(() => {
     scene.render();
   })
 }
-
-onMounted(() => {
-  // console.log(canvasEl.value)
-  // if (canvasEl.value) {
-    // canvasEl.value.style.width = '700px'
-    // canvasEl2.value.style.width = '700px'
-
-    // createCap(canvasEl.value)
-    // createTableTent(canvasEl2.value)
-
-  // }
-})
 </script>
 
 
@@ -266,7 +275,7 @@ onMounted(() => {
   flex-basis: 400px;
 }
 
-.canvas {
+#canvas-container {
   flex-basis: 100%;
 }
 
