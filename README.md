@@ -47,7 +47,7 @@ It's a demo project where we can select models, change the size, and wrap them b
 
 ---
 
-### Steps to load model
+### Steps to render model
 
 - At first, we need to create `<canvas>` element using JavaScript, 
   because every time when we change size or image for our model we should delete
