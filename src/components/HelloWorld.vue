@@ -113,36 +113,23 @@ const specs = reactive({
 const generate = () => {
   const canvasContainer = document.getElementById('canvas-container');
   let canvas = document.getElementById('canvas');
-  // console.log(canvas)
 
   if (canvas) {
     canvas.remove();
-
-    canvas = document.createElement('canvas');
-    canvas.id = 'canvas';
-
-    canvasContainer.append(canvas);
-  } else {
-    canvas = document.createElement('canvas');
-    canvas.id = 'canvas';
-
-    canvasContainer.append(canvas);
   }
+
+  canvas = document.createElement('canvas');
+  canvas.id = 'canvas';
+
+  canvasContainer.append(canvas);
 
   canvas.style.width = '700px';
 
-  let modelPath = '';
-  let modelFileName = '';
-
   if (selectedModel.value === 'Mug') {
-    modelPath = '/models/mug/';
-    modelFileName = 'caneca.gltf';
     createCap(canvas, image.value)
   }
 
   if (selectedModel.value === 'tableTent') {
-    modelPath = '/models/TableTentBlender/';
-    modelFileName = 'TableTentBlender.gltf';
     createTableTent(canvas, image.value)
   }
 
@@ -161,7 +148,7 @@ const createTableTent = (canvas, image) => {
   const scene = new BABYLON.Scene(engine);
 
 
-  const camera = new BABYLON.ArcRotateCamera("camera", -0.1, 2, 10, new BABYLON.Vector3(0, 0, 0), scene);
+  const camera = new BABYLON.ArcRotateCamera("camera", -0.2, 1.5, 10, new BABYLON.Vector3(0, 0, 0), scene);
   camera.attachControl(canvas, true);
 
   // scene.debugLayer.show();
@@ -190,7 +177,6 @@ const createTableTent = (canvas, image) => {
   // load model
   BABYLON.SceneLoader.LoadAssetContainer('/models/DownloadedTableTent/', 'DonwloadedTableTent2.gltf', scene, (container) => {
     const meshes = container.meshes;
-    // console.log(meshes)
     meshes[0].scaling = new BABYLON.Vector3(25 * computedWidth,25 * computedHeight,25 * computedInnerWidth)
     meshes[0].position.y = -2;
 
@@ -199,7 +185,6 @@ const createTableTent = (canvas, image) => {
 
 
     container.addAllToScene();
-
   })
 
   engine.runRenderLoop(() => {
@@ -252,7 +237,7 @@ const createCap = (canvas, image) => {
           10 * computedRadius
       );
     })
-    meshes[1].material = capMat
+    meshes[0].material = capMat
 
     container.addAllToScene();
 
